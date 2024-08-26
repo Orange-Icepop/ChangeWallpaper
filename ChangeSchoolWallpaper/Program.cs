@@ -64,7 +64,7 @@ namespace ChangeSchoolWallpaper
             else Console.WriteLine("Config file found");
         }
 
-        public static string CurrentDate()
+        public static string CurrentDate()//当前日期
         {
             string week = DateTime.Now.DayOfWeek.ToString();
             return week switch
@@ -80,7 +80,7 @@ namespace ChangeSchoolWallpaper
             };
         }
 
-        public static object GetKey(string key)
+        public static object GetKey(string key)//读取json
         {
             string config = File.ReadAllText(configPath);
             JObject configJson = JObject.Parse(config);
@@ -99,7 +99,7 @@ namespace ChangeSchoolWallpaper
             }
         }
 
-        public static string GetCurrentImagePath()
+        public static string GetCurrentImagePath()//获取图片路径
         {
             bool exception = (bool)GetKey("exception_setting");
             if (exception)
