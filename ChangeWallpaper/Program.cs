@@ -19,7 +19,15 @@ namespace ChangeWallpaper
             Wallpaper.Initalize();
             try
             {
-                WinAPI.SetWallpaper(Wallpaper.GetCurrentImagePath());
+                bool result = WinAPI.SetWallpaper(Wallpaper.GetCurrentImagePath());
+                if (result)
+                {
+                    Console.WriteLine("Wallpaper changed successfully!");
+                }
+                else
+                {
+                    throw new Exception("Failed to change wallpaper.");
+                }
             }
             catch (Exception ex)
             {
@@ -33,14 +41,16 @@ namespace ChangeWallpaper
     public class WinAPI
     {
         [DllImport("user32.dll", CharSet = CharSet.Auto, EntryPoint = "SystemParametersInfo")]
-        private static extern int SystemParametersInfo(uint uAction, int uParam, string lpvParam, uint fuWinIni);
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool SystemParametersInfo(uint uAction, int uParam, string lpvParam, uint fuWinIni);
         private const uint SPI_SETDESKWALLPAPER = 0x0014;
         private const uint SPIF_UPDATEINIFILE = 0x0001;
         private const uint SPIF_SENDWININICHANGE = 0x0002;
-        public static int SetWallpaper(string path)
+        public static bool SetWallpaper(string path)
         {
             StringBuilder sb = new StringBuilder(path);
-            return SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, path, SPIF_UPDATEINIFILE | SPIF_SENDWININICHANGE);
+            sb.Append("\0");
+            return SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, sb.ToString(), SPIF_UPDATEINIFILE | SPIF_SENDWININICHANGE);
         }
     }
     public class Wallpaper
@@ -54,14 +64,14 @@ namespace ChangeWallpaper
                 var initialConfig = new
                 {
                     exception_setting = false,
-                    monday = String.Empty,
-                    tuesday = String.Empty,
-                    wednesday = String.Empty,
-                    thursday = String.Empty,
-                    friday = String.Empty,
-                    saturday = String.Empty,
-                    sunday = String.Empty,
-                    exception = String.Empty,
+                    monday = string.Empty,
+                    tuesday = string.Empty,
+                    wednesday = string.Empty,
+                    thursday = string.Empty,
+                    friday = string.Empty,
+                    saturday = string.Empty,
+                    sunday = string.Empty,
+                    exception = string.Empty,
                 };
                 string json = JsonConvert.SerializeObject(initialConfig, Formatting.Indented);
                 File.WriteAllText(configPath, json);
