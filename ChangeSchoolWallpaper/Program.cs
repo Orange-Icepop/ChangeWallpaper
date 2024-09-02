@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Xml.Serialization;
 
 namespace ChangeSchoolWallpaper
@@ -28,12 +29,13 @@ namespace ChangeSchoolWallpaper
     public class WinAPI
     {
         [DllImport("user32.dll", CharSet = CharSet.Auto, EntryPoint = "SystemParametersInfo")]
-        private static extern int SystemParametersInfo(int uAction, int uParam, string lpvParam, int fuWinIni);
-        private const int SPI_SETDESKWALLPAPER = 20;
-        private const int SPIF_UPDATEINIFILE = 0x01;
-        private const int SPIF_SENDWININICHANGE = 0x02;
+        private static extern int SystemParametersInfo(uint uAction, int uParam, string lpvParam, uint fuWinIni);
+        private const uint SPI_SETDESKWALLPAPER = 0x0014;
+        private const uint SPIF_UPDATEINIFILE = 0x0001;
+        private const uint SPIF_SENDWININICHANGE = 0x0002;
         public static int SetWallpaper(string path)
         {
+            StringBuilder sb = new StringBuilder(path);
             return SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, path, SPIF_UPDATEINIFILE | SPIF_SENDWININICHANGE);
         }
     }
