@@ -1,8 +1,5 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Xml.Serialization;
+﻿using System.Runtime.InteropServices;
+using System.Text.Json;
 
 namespace ChangeSchoolWallpaper
 {
@@ -28,21 +25,22 @@ namespace ChangeSchoolWallpaper
     }
     public class WinAPI
     {
-        [DllImport("user32.dll", CharSet = CharSet.Auto, EntryPoint = "SystemParametersInfo")]
+        [DllImport("user32.dll", CharSet = CharSet.Unicode, EntryPoint = "SystemParametersInfo")]
         private static extern int SystemParametersInfo(uint uAction, int uParam, string lpvParam, uint fuWinIni);
         private const uint SPI_SETDESKWALLPAPER = 0x0014;
         private const uint SPIF_UPDATEINIFILE = 0x0001;
         private const uint SPIF_SENDWININICHANGE = 0x0002;
         public static int SetWallpaper(string path)
         {
-            StringBuilder sb = new StringBuilder(path);
+            if (!File.Exists(path)) throw new FileNotFoundException($"Wallpaper file not found at {path}");
             return SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, path, SPIF_UPDATEINIFILE | SPIF_SENDWININICHANGE);
         }
     }
-    public class Wallpaper
+    public static class Wallpaper
     {
-        public static string configPath = "config.json";
-        public static void Initalize()// 初始化配置文件
+        public const string configPath = "config.json";
+
+        public static void Initalize()
         {
             if (!File.Exists(configPath))
             {
@@ -59,39 +57,28 @@ namespace ChangeSchoolWallpaper
                     sunday = String.Empty,
                     exception = String.Empty,
                 };
-                string json = JsonConvert.SerializeObject(initialConfig, Formatting.Indented);
+                // 使用System.Text.Json进行序列化
+                string json = JsonSerializer.Serialize(initialConfig, new JsonSerializerOptions { WriteIndented = true });
                 File.WriteAllText(configPath, json);
                 Console.WriteLine("Config file created");
             }
             else Console.WriteLine("Config file found");
         }
 
-        public static string CurrentDate()//当前日期
-        {
-            string week = DateTime.Now.DayOfWeek.ToString();
-            return week switch
-            {
-                "Monday" => "monday",
-                "Tuesday" => "tuesday",
-                "Wednesday" => "wednesday",
-                "Thursday" => "thursday",
-                "Friday" => "friday",
-                "Saturday" => "saturday",
-                "Sunday" => "sunday",
-                _ => throw new Exception("Invalid day of week")
-            };
-        }
-
-        public static object GetKey(string key)//读取json
+        public static string GetKey(string key)
         {
             string config = File.ReadAllText(configPath);
-            JObject configJson = JObject.Parse(config);
-            if (configJson.TryGetValue(key, out JToken value))
+            // 使用JsonDocument替代JObject
+            using JsonDocument doc = JsonDocument.Parse(config);
+            JsonElement root = doc.RootElement;
+
+            if (root.TryGetProperty(key, out JsonElement value))
             {
-                return value.Type switch
+                return value.ValueKind switch
                 {
-                    JTokenType.String => value.ToString(),
-                    JTokenType.Boolean => value.ToObject<bool>(),
+                    JsonValueKind.String => value.GetString() ?? string.Empty,
+                    JsonValueKind.True => "true",
+                    JsonValueKind.False => "false",
                     _ => throw new Exception("Invalid key type")
                 };
             }
@@ -100,25 +87,30 @@ namespace ChangeSchoolWallpaper
                 throw new Exception("Invalid key");
             }
         }
+        public static string CurrentDate()//当前日期
+        {
+            return DateTime.Now.DayOfWeek.ToString().ToLower();
+        }
+
 
         public static string GetCurrentImagePath()//获取图片路径
         {
-            bool exception = (bool)GetKey("exception_setting");
-            if (exception)
+            var exception = GetKey("exception_setting");
+            if (exception == "true")
             {
-                if (GetKey("exception") == String.Empty)
+                if (string.IsNullOrEmpty(GetKey("exception")))
                 {
                     throw new Exception("No wallpaper set for exception");
                 }
-                else return GetKey("exception").ToString();
+                else return GetKey("exception");
             }
             else
             {
-                if (GetKey(CurrentDate()) == String.Empty)
+                if (string.IsNullOrEmpty(GetKey(CurrentDate())))
                 {
                     throw new Exception("No wallpaper set for this day");
                 }
-                else return GetKey(CurrentDate()).ToString();
+                else return GetKey(CurrentDate());
             }
         }
     }
