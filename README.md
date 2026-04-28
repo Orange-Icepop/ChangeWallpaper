@@ -1,4 +1,13 @@
 # ChangeWallpaper
+
+## 此项目已废弃 This project is obsolete
+
+由于任何一个版本的 .NET 运行时的笨重对于这么一个小程序都是不可接受的，此项目即日起停止维护。
+
+[基于Rust的新项目](https://github.com/Orange-Icepop/schools_wallpaper)已经发布，旨在通过AOT提供更好的性能与启动速度。
+
+---
+
 为了给学校的电脑按照当前星期几设置带有课程表的壁纸而写的一个命令行C#程序。由于是为了中国中学常用的Windows 7系统设计的，所以采用的是较老的 .NET 6。
 ## 使用方法
 1、确保当前账户对程序运行目录有完全控制权。
